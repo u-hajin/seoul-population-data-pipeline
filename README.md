@@ -1,2 +1,5 @@
 # seoul-population-data-pipeline
-서울시 실시간 인구 데이터를 활용한 파이프라인 구축
+
+## 시스템 구조
+
+![architecture](./images/architecture.jpg)
