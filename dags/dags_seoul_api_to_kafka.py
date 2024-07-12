@@ -5,7 +5,7 @@ from operators.seoul_api_to_kafka_operator import SeoulApiToKafkaOperator
 
 with DAG(
         dag_id='dags_seoul_api_to_kafka',
-        schedule='*/30 * * * *',
+        schedule='*/20 * * * *',
         start_date=pendulum.datetime(2024, 7, 11,  tz='Asia/Seoul'),
         catchup=False
 ) as dag:
