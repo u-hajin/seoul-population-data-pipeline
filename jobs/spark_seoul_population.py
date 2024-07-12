@@ -42,6 +42,21 @@ def main():
         StructField("non_resident_population_rate", FloatType(), False)
     ])
 
+    def read_kafka(topic, schema):
+        return (spark.readStream
+                .format("kafka")
+                .option("kafka.bootstrap.servers", "broker:29092")
+                .option('subscribe', topic)
+                .option("startingOffsets", "earliest")
+                .load()
+                .selectExpr("CAST(value AS STRING)")
+                .select(from_json(col("value"), schema).alias("data"))
+                .select("data.*")
+                .withWatermark("current_time", '2 minutes')
+                )
+
+    seoul_population_dataframe = read_kafka("seoul_population", seoul_population_schema).alias("seoul_population")
+
 
 if __name__ == "__main__":
     main()
