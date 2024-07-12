@@ -51,20 +51,20 @@ class SeoulApiToKafkaOperator(BaseOperator):
             # 'live_population': content['LIVE_PPLTN_STTS'],
             'area_congest_level': content['AREA_CONGEST_LVL'],
             'area_congest_message': content['AREA_CONGEST_MSG'],
-            'area_population_min': content['AREA_PPLTN_MIN'],
-            'area_population_max': content['AREA_PPLTN_MAX'],
-            'male_population_rate': content['MALE_PPLTN_RATE'],
-            'female_population_rate': content['FEMALE_PPLTN_RATE'],
-            'population_rate_0': content['PPLTN_RATE_0'],
-            'population_rate_10': content['PPLTN_RATE_10'],
-            'population_rate_20': content['PPLTN_RATE_20'],
-            'population_rate_30': content['PPLTN_RATE_30'],
-            'population_rate_40': content['PPLTN_RATE_40'],
-            'population_rate_50': content['PPLTN_RATE_50'],
-            'population_rate_60': content['PPLTN_RATE_60'],
-            'population_rate_70': content['PPLTN_RATE_70'],
-            'resident_population_rate': content['RESNT_PPLTN_RATE'],
-            'non_resident_population_rate': content['NON_RESNT_PPLTN_RATE']
+            'area_population_min': int(content['AREA_PPLTN_MIN']),
+            'area_population_max': int(content['AREA_PPLTN_MAX']),
+            'male_population_rate': float(content['MALE_PPLTN_RATE']),
+            'female_population_rate': float(content['FEMALE_PPLTN_RATE']),
+            'population_rate_0': float(content['PPLTN_RATE_0']),
+            'population_rate_10': float(content['PPLTN_RATE_10']),
+            'population_rate_20': float(content['PPLTN_RATE_20']),
+            'population_rate_30': float(content['PPLTN_RATE_30']),
+            'population_rate_40': float(content['PPLTN_RATE_40']),
+            'population_rate_50': float(content['PPLTN_RATE_50']),
+            'population_rate_60': float(content['PPLTN_RATE_60']),
+            'population_rate_70': float(content['PPLTN_RATE_70']),
+            'resident_population_rate': float(content['RESNT_PPLTN_RATE']),
+            'non_resident_population_rate': float(content['NON_RESNT_PPLTN_RATE'])
         }
 
         if self.current_time is not None:
@@ -85,5 +85,6 @@ class SeoulApiToKafkaOperator(BaseOperator):
             self.topic,
             key=data[self.kafka_publish_key],
             value=json.dumps(data, ensure_ascii=False),
-            on_delivery=self._delivery_report)
+            on_delivery=self._delivery_report
+        )
         producer.poll(0)
