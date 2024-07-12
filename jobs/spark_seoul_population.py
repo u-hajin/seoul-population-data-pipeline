@@ -55,7 +55,27 @@ def main():
                 .withWatermark("current_time", '2 minutes')
                 )
 
+    def stream_writer(input: DataFrame, checkpoint_folder, output):
+        return (input
+                .withColumn("current_time", from_utc_timestamp(col("current_time"), "Asia/Seoul"))
+                .withColumn("year", date_format(col("current_time"), "yyyy"))
+                .withColumn("month", date_format(col("current_time"), "MM"))
+                .withColumn("day", date_format(col("current_time"), "dd"))
+                .withColumn("hour", date_format(col("current_time"), "HH"))
+                .withColumn("minute", date_format(col("current_time"), "mm"))
+                .writeStream
+                .format("parquet")
+                .option("checkpointLocation", checkpoint_folder)
+                .option("path", output)
+                .partitionBy("year", "month", "day", "hour", "minute")
+                .outputMode("append")
+                .start()
+                )
+
     seoul_population_dataframe = read_kafka("seoul_population", seoul_population_schema).alias("seoul_population")
+    query = stream_writer(seoul_population_dataframe, configuration["AWS_CHECKPOINT_FOLDER"],
+                          configuration["AWS_OUTPUT"])
+    query.awaitTermination()
 
 
 if __name__ == "__main__":
