@@ -2,4 +2,4 @@
 
 ## 시스템 구조
 
-![architecture](./images/architecture.jpg)
+![architecture](./images/architecture.png)
