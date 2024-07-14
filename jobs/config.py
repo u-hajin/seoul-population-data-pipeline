@@ -4,5 +4,5 @@ configuration = {
     "AWS_CHECKPOINT_FOLDER": "s3a://~",
     "AWS_OUTPUT": "s3a://~",
     "KAFKA_SERVERS": ,
-    "KAFKA_TOPIC":
+    "KAFKA_TOPIC": "seoul_population"
 }
