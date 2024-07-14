@@ -45,7 +45,7 @@ def main():
     def read_kafka(topic, schema):
         return (spark.readStream
                 .format("kafka")
-                .option("kafka.bootstrap.servers", "broker:29092")
+                .option("kafka.bootstrap.servers", configuration["KAFKA_SERVERS"])
                 .option('subscribe', topic)
                 .option("startingOffsets", "earliest")
                 .load()
@@ -72,7 +72,8 @@ def main():
                 .start()
                 )
 
-    seoul_population_dataframe = read_kafka("seoul_population", seoul_population_schema).alias("seoul_population")
+    seoul_population_dataframe = read_kafka(configuration["KAFKA_TOPIC"], seoul_population_schema).alias(
+        configuration["KAFKA_TOPIC"])
     query = stream_writer(seoul_population_dataframe, configuration["AWS_CHECKPOINT_FOLDER"],
                           configuration["AWS_OUTPUT"])
     query.awaitTermination()
