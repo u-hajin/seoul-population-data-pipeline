@@ -60,6 +60,6 @@ API key는 열린 데이터 광장에서 직접 발급받아야 합니다.
 ![result_s3](./images/result_s3.png)  
 ![result_query_editor](./images/result_query_editor.png)  
 ![result_min](./images/result_min.png)  
-![result_max](./images/result_max.png)  
+![result_max](./images/result_max.jpeg)  
 ![result_age_population](./images/result_age_population.png)  
 ![result_resident](./images/result_resident.png)
