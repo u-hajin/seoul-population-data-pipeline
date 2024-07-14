@@ -4,8 +4,8 @@ from pyspark.sql.functions import col, DataFrame, date_format, from_json, from_u
 from pyspark.sql.types import FloatType, StructType, StructField, StringType, TimestampType, IntegerType
 
 
-def main():
-    spark = SparkSession.builder.appName("SeoulPopulation") \
+def create_spark_session():
+    return SparkSession.builder.appName("SeoulPopulation") \
         .config("spark.jars.packages",
                 "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,"
                 "org.apache.hadoop:hadoop-aws:3.3.1,"
@@ -17,9 +17,9 @@ def main():
                 "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider") \
         .getOrCreate()
 
-    spark.sparkContext.setLogLevel("WARN")
 
-    seoul_population_schema = StructType([
+def define_schema():
+    return StructType([
         StructField("current_time", TimestampType(), True),
         StructField("area_name", StringType(), False),
         StructField("area_code", StringType(), False),
@@ -42,40 +42,49 @@ def main():
         StructField("non_resident_population_rate", FloatType(), False)
     ])
 
-    def read_kafka(topic, schema):
-        return (spark.readStream
-                .format("kafka")
-                .option("kafka.bootstrap.servers", configuration["KAFKA_SERVERS"])
-                .option('subscribe', topic)
-                .option("startingOffsets", "earliest")
-                .load()
-                .selectExpr("CAST(value AS STRING)")
-                .select(from_json(col("value"), schema).alias("data"))
-                .select("data.*")
-                .withWatermark("current_time", '2 minutes')
-                )
 
-    def stream_writer(input: DataFrame, checkpoint_folder, output):
-        return (input
-                .withColumn("current_time", from_utc_timestamp(col("current_time"), "Asia/Seoul"))
-                .withColumn("year", date_format(col("current_time"), "yyyy"))
-                .withColumn("month", date_format(col("current_time"), "MM"))
-                .withColumn("day", date_format(col("current_time"), "dd"))
-                .withColumn("hour", date_format(col("current_time"), "HH"))
-                .withColumn("minute", date_format(col("current_time"), "mm"))
-                .writeStream
-                .format("parquet")
-                .option("checkpointLocation", checkpoint_folder)
-                .option("path", output)
-                .partitionBy("year", "month", "day", "hour", "minute")
-                .outputMode("append")
-                .start()
-                )
+def read_kafka(spark, topic, schema):
+    return (spark.readStream
+            .format("kafka")
+            .option("kafka.bootstrap.servers", configuration["KAFKA_SERVERS"])
+            .option('subscribe', topic)
+            .option("startingOffsets", "earliest")
+            .load()
+            .selectExpr("CAST(value AS STRING)")
+            .select(from_json(col("value"), schema).alias("data"))
+            .select("data.*")
+            .withWatermark("current_time", '2 minutes')
+            )
 
-    seoul_population_dataframe = read_kafka(configuration["KAFKA_TOPIC"], seoul_population_schema).alias(
+
+def write_stream(input_df, checkpoint_folder, output_path):
+    return (input_df
+            .withColumn("current_time", from_utc_timestamp(col("current_time"), "Asia/Seoul"))
+            .withColumn("year", date_format(col("current_time"), "yyyy"))
+            .withColumn("month", date_format(col("current_time"), "MM"))
+            .withColumn("day", date_format(col("current_time"), "dd"))
+            .withColumn("hour", date_format(col("current_time"), "HH"))
+            .withColumn("minute", date_format(col("current_time"), "mm"))
+            .writeStream
+            .format("parquet")
+            .option("checkpointLocation", checkpoint_folder)
+            .option("path", output_path)
+            .partitionBy("year", "month", "day", "hour", "minute")
+            .outputMode("append")
+            .start()
+            )
+
+
+def main():
+    spark = create_spark_session()
+    spark.sparkContext.setLogLevel("WARN")
+
+    schema = define_schema()
+    seoul_population_df = read_kafka(spark, configuration["KAFKA_TOPIC"], schema).alias(
         configuration["KAFKA_TOPIC"])
-    query = stream_writer(seoul_population_dataframe, configuration["AWS_CHECKPOINT_FOLDER"],
-                          configuration["AWS_OUTPUT"])
+
+    query = write_stream(seoul_population_df, configuration["AWS_CHECKPOINT_FOLDER"],
+                         configuration["AWS_OUTPUT"])
     query.awaitTermination()
 
 
